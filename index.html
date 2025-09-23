@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Locate — Approximate by IP</title>
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self' https://ipapi.co https://ipapi.co/* data: 'unsafe-inline' 'unsafe-eval'">
+  <style>
+    body { font-family: system-ui, Arial, sans-serif; padding: 18px; color: #222; }
+    h1 { margin: 4px 0 12px 0; font-size: 20px; }
+    #box { border: 1px solid #e5e5e5; padding: 12px; border-radius: 8px; background: #fafafa; }
+    button { padding: 10px 14px; font-size: 15px; cursor: pointer; }
+    #status { margin-top: 12px; font-weight: 600; }
+    #coords { margin-top: 8px; white-space: pre-wrap; font-family: monospace; }
+    .small { color: #666; font-size: 13px; margin-top: 8px; }
+  </style>
+</head>
+<body>
+  <h1>Find My Current Location (approx.)</h1>
+
+  <div id="box">
+    <div>
+      <button id="locateBtn">Get My Location</button>
+      <button id="refreshBtn" style="margin-left:8px">Refresh</button>
+    </div>
+
+    <div id="status" aria-live="polite">Click <strong>Get My Location</strong> to begin.</div>
+    <div id="coords"></div>
+    <div class="small">Note: This uses IP-based geolocation (approximate). Accuracy depends on your ISP and network.</div>
+  </div>
+
+  <script>
+    const locateBtn = document.getElementById('locateBtn');
+    const refreshBtn = document.getElementById('refreshBtn');
+    const statusEl = document.getElementById('status');
+    const coordsEl = document.getElementById('coords');
+
+    async function fetchIpLocation() {
+      // Choose an IP geolocation service. ipapi.co is used here as a free option.
+      // If you prefer another provider, replace the URL accordingly.
+      const url = 'https://ipapi.co/json/';
+      statusEl.textContent = 'Fetching location by IP...';
+      coordsEl.textContent = '';
+
+      try {
+        const res = await fetch(url, { cache: 'no-store' });
+        if (!res.ok) throw new Error(`Network response was not ok (${res.status})`);
+
+        const data = await res.json();
+        // ipapi returns fields like latitude, longitude, city, region, country_name, ip
+        const lat = data.latitude ?? data.lat ?? null;
+        const lon = data.longitude ?? data.lon ?? null;
+
+        if (lat == null || lon == null) {
+          // Some providers use other field names; show full response for debugging.
+          throw new Error('Location fields not present in response.');
+        }
+
+        statusEl.textContent = 'Location found (approximate):';
+        coordsEl.textContent =
+`IP: ${data.ip ?? '—'}
+Latitude: ${lat}
+Longitude: ${lon}
+City: ${data.city ?? '—'}
+Region: ${data.region ?? data.region_code ?? '—'}
+Country: ${data.country_name ?? data.country ?? '—'}
+Postal: ${data.postal ?? '—'}
+Timezone: ${data.timezone ?? '—'}
+Provider: ${data.org ?? '—'}`;
+
+      } catch (err) {
+        console.error('Error fetching IP location:', err);
+        statusEl.textContent = 'Error getting location: ' + (err.message || String(err));
+        coordsEl.textContent = '';
+      }
+    }
+
+    locateBtn.addEventListener('click', fetchIpLocation);
+    refreshBtn.addEventListener('click', fetchIpLocation);
+  </script>
+</body>
+</html>
+
+
+
+
+
+
+
+
